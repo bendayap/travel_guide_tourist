@@ -56,7 +56,7 @@ class _RequestBookingState extends State<RequestBooking> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const SizedBox(height: 20),
-                Text('${data['packageId']}, ${data['tourGuideId']}'),
+                Text('Package ID: ${data['packageId']}\nTour Guide ID: ${data['tourGuideId']}'),
                 const SizedBox(height: 20),
                 // TextFormField(
                 //   ///Budget Field
@@ -144,8 +144,6 @@ class _RequestBookingState extends State<RequestBooking> {
           .set(booking.toJson());
     }
 
-    // navigatorKey.currentState!.popUntil((route) => route.isFirst);
-    // navigatorKey.currentState!.pop();
     Navigator.popUntil(context, ModalRoute.withName('/tour_guide_list'));
     Utils.showSnackBarSuccess('Booking Request Sent');
   }
