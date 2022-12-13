@@ -37,6 +37,19 @@ class _HomePageState extends State<HomePage> {
             title: const Text('Home (Testing)'),
             backgroundColor: AppTheme.mainAppBar,
             centerTitle: true,
+            actions: <Widget>[
+              Padding(
+                  padding: const EdgeInsets.only(right: 20.0),
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(context, '/chatroom_list');
+                    },
+                    child: const Icon(
+                        Icons.message
+                    ),
+                  )
+              ),
+            ],
           ),
           body: SingleChildScrollView(
             child: Padding(

@@ -10,6 +10,8 @@ class OrderRequest {
   final String status; //Pending, Accepted, Rejected, Cancelled, Completed
   final num paymentAmount;
   final bool isPaymentMade;
+  final double currentLatitude;
+  final double currentLongitude;
 
   const OrderRequest({
     this.orderId = '',
@@ -21,6 +23,8 @@ class OrderRequest {
     this.status = 'Pending',
     this.paymentAmount = 0,
     this.isPaymentMade = false,
+  required this.currentLatitude,
+  required this.currentLongitude,
   });
 
   static OrderRequest fromJson(Map<String, dynamic>json) => OrderRequest(
@@ -33,6 +37,8 @@ class OrderRequest {
     status: json['status'],
     paymentAmount: json['paymentAmount'],
     isPaymentMade: json['isPaymentMade'],
+    currentLatitude: json['currentLatitude'],
+    currentLongitude: json['currentLongitude'],
   );
 
   Map<String, dynamic> toJson() => {
@@ -45,5 +51,7 @@ class OrderRequest {
     'status': status,
     'paymentAmount': paymentAmount,
     'isPaymentMade': isPaymentMade,
+    'currentLatitude': currentLatitude,
+    'currentLongitude': currentLongitude,
   };
 }

@@ -41,7 +41,7 @@ dependencies:
   cloud_firestore: ^4.1.0
   firebase_core: ^2.3.0
   firebase_auth: ^4.1.4
-  firebase_storage: ^11.0.4
+  firebase_storage: ^11.0.7
 
   modal_progress_hud_nsn: ^0.3.0
   email_validator: ^2.1.17
@@ -50,6 +50,12 @@ dependencies:
   geolocator: ^9.0.2
   geocoding: ^2.0.5
   provider: ^6.0.4
+  image_picker: ^0.8.6
+  permission_handler: ^10.2.0
+  http: ^0.13.5
+  network_to_file_image: ^4.0.1
+  path_provider: ^2.0.11
+  flutter_multi_formatter: ^2.9.11
 
 dev_dependencies:
   flutter_test:

@@ -34,7 +34,7 @@ class _TourGuideNearbyDetailState extends State<TourGuideNearbyDetail> {
           const SizedBox(height: 40.0),
           ElevatedButton(
             onPressed: () {
-              _requestOrder(tourGuideId, currentAddress);
+              _requestOrder(tourGuideId, currentAddress, data['currentLat'], data['currentLng']);
             },
             child: const Text('Order this guide'),
           ),
@@ -43,7 +43,8 @@ class _TourGuideNearbyDetailState extends State<TourGuideNearbyDetail> {
     );
   }
 
-  Future<void> _requestOrder(String tourGuideId, String currentAddress)
+  Future<void> _requestOrder(String tourGuideId, String currentAddress,
+      double currentLat, double currentLng)
   async {
     showDialog(
       context: context,
@@ -63,12 +64,18 @@ class _TourGuideNearbyDetailState extends State<TourGuideNearbyDetail> {
         address: currentAddress,
         startTime: DateTime.now(),
         endTime: DateTime.now(),
+        currentLatitude: currentLat,
+        currentLongitude: currentLng,
+
       );
 
       await firestore
           .collection("orderRequests")
           .doc(docOrder.id)
           .set(orderRequest.toJson());
+
+      ///TODO: deduct amount, don forgot upside there need balance checking
+
     }
 
     Navigator.popUntil(context, ModalRoute.withName('/tour_guide_nearby'));

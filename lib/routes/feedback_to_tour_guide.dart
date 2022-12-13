@@ -115,8 +115,8 @@ class _FeedbackToTourGuideState extends State<FeedbackToTourGuide> {
 
       HistoryFeedback feedback = HistoryFeedback(
         feedbackId: feedbackId,
-        tourGuideId: tourGuideId,
-        touristId: touristId,
+        toId: tourGuideId,
+        fromId: touristId,
         feedbackDate: DateTime.now(),
         content: content,
         rating: rating,
@@ -127,7 +127,7 @@ class _FeedbackToTourGuideState extends State<FeedbackToTourGuide> {
           .doc(feedbackId)
           .set(feedback.toJson());
 
-      ///Update Tour Guide Rating and RateNumber
+      ///TODO: Update Tour Guide Rating and RateNumber
       // num currentRating;
       // await firestore.collection('tourGuides').get().then((snapshot) {
       //   currentRating = snapshot.data['rating'] * snapshot.data['rateNumber'];

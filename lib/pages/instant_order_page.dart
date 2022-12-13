@@ -1,4 +1,4 @@
-// ignore_for_file: use_build_context_synchronously
+// ignore_for_file: use_build_context_synchronously, avoid_function_literals_in_foreach_calls
 import 'package:travel_guide_tourist/imports.dart';
 
 class InstantOrderPage extends StatefulWidget {
@@ -11,6 +11,8 @@ class InstantOrderPage extends StatefulWidget {
 class _InstantOrderPageState extends State<InstantOrderPage> {
   late Position currentPosition;
   String currentAddress = 'Location not detected yet';
+  List<String> onDutyList = [];
+  // List<InstantOrder> instantOrderList = [];
 
   var lat2 = 38.4219983;
   var lng2 = -121.084;
@@ -19,6 +21,7 @@ class _InstantOrderPageState extends State<InstantOrderPage> {
   @override
   void initState() {
     _getCurrentPosition();
+    _getInstant();
     super.initState();
   }
 
@@ -34,7 +37,7 @@ class _InstantOrderPageState extends State<InstantOrderPage> {
                 padding: const EdgeInsets.only(right: 20.0),
                 child: GestureDetector(
                   onTap: () {
-                    ///TODO: Implement chatroom
+                    Navigator.pushNamed(context, '/chatroom_list');
                   },
                   child: const Icon(
                       Icons.message
@@ -47,6 +50,7 @@ class _InstantOrderPageState extends State<InstantOrderPage> {
           padding: const EdgeInsets.fromLTRB(0.0, 100.0, 0.0, 0.0),
           child: Column(
             children: [
+              // Text(instantOrderList[1].ownerID),
               Center(
                 child: ElevatedButton(
                   onPressed: () async {
@@ -74,6 +78,7 @@ class _InstantOrderPageState extends State<InstantOrderPage> {
                           'currentAddress': currentAddress,
                           'currentLat': currentPosition.latitude,
                           'currentLng': currentPosition.longitude,
+                          'onDutyList': onDutyList,
                         });
                   },
                   child: const Text('Start Order'),
@@ -167,15 +172,31 @@ class _InstantOrderPageState extends State<InstantOrderPage> {
     return true;
   }
 
-  _calculateDistance(double lat1, double lng1, lat2, lng2) {
+  _calculateDistance(double latitude1, double longitude1, latitude2, longitude2) {
     var p = 0.017453292519943295;
     var c = cos;
     var a = 0.5 -
-        c((lat2 - lat1) * p) / 2 +
-        c(lat1 * p) * c(lat2 * p) * (1 - c((lng2 - lng1) * p)) / 2;
+        c((latitude2 - latitude1) * p) / 2 +
+        c(latitude1 * p) * c(latitude2 * p) * (1 - c((longitude2 - longitude1) * p)) / 2;
     var distanceInKiloMeters = 12742 * asin(sqrt(a));
 
     /// return as distance in Meters
     return distanceInKiloMeters * 1000;
+  }
+
+  _getInstant() async {
+    // InstantOrder instantOrder;
+    await FirebaseFirestore.instance
+        .collection('instantOrder')
+    // .where('onDuty', isEqualTo: true)
+        .get()
+        .then((value) => {
+      value.docs.forEach((doc) {
+        // instantOrder = InstantOrder.fromJson(doc.data());
+        // instantOrderList.add(instantOrder);
+        // onDutyList.add(instantOrder.ownerID);
+        onDutyList.add(doc.data()['ownerID']);
+      })
+    });
   }
 }

@@ -28,8 +28,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   @override
-  Widget build(BuildContext context) =>
-      GestureDetector(
+  Widget build(BuildContext context) => GestureDetector(
         behavior: HitTestBehavior.translucent,
         onTap: () {
           FocusScopeNode currentFocus = FocusScope.of(context);
@@ -64,23 +63,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   TextFormField(
                     ///Email Field
                     controller: emailController,
-                    textInputAction: TextInputAction.next,
+                    textInputAction: TextInputAction.done,
                     decoration: const InputDecoration(labelText: 'Email'),
                     autovalidateMode: AutovalidateMode.onUserInteraction,
                     validator: (email) =>
-                    email != null && !EmailValidator.validate(email)
-                        ? 'Enter a valid email'
-                        : null,
+                        email != null && !EmailValidator.validate(email)
+                            ? 'Enter a valid email'
+                            : null,
                   ),
                   const SizedBox(height: 4),
                   TextFormField(
                     ///Username Field
                     controller: usernameController,
-                    textInputAction: TextInputAction.next,
+                    textInputAction: TextInputAction.done,
                     decoration: const InputDecoration(labelText: 'Username'),
                     autovalidateMode: AutovalidateMode.onUserInteraction,
-                    validator: (value) =>
-                    value != null && value.isEmpty
+                    validator: (value) => value != null && value.isEmpty
                         ? 'Enter a username'
                         : null,
                   ),
@@ -88,12 +86,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   TextFormField(
                     ///Password Field
                     controller: passwordController,
-                    textInputAction: TextInputAction.next,
+                    textInputAction: TextInputAction.done,
                     decoration: const InputDecoration(labelText: 'Password'),
                     obscureText: true,
                     autovalidateMode: AutovalidateMode.onUserInteraction,
-                    validator: (value) =>
-                    value != null && value.length < 6
+                    validator: (value) => value != null && value.length < 6
                         ? 'Enter minimum 6 characters'
                         : null,
                   ),
@@ -121,10 +118,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           text: 'Log In',
                           style: TextStyle(
                             decoration: TextDecoration.underline,
-                            color: Theme
-                                .of(context)
-                                .colorScheme
-                                .secondary,
+                            color: Theme.of(context).colorScheme.secondary,
                           ),
                         )
                       ],
@@ -153,11 +147,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
 
     try {
-      UserCredential cred  = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      UserCredential cred =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
+      ///Create tourist document
       Tourist tourist = Tourist(
         uid: cred.user!.uid,
         username: username,
@@ -167,34 +163,32 @@ class _SignUpScreenState extends State<SignUpScreen> {
         icNumber: "",
         photoUrl: "",
         description: "",
-        rating: 0,
+        rating: 0.0,
+        icVerified: false,
       );
 
       await firestore
           .collection("tourists")
           .doc(cred.user!.uid)
           .set(tourist.toJson());
+
+      ///Create eWallet document
+      String eWalletId = 'ewallet_${cred.user!.uid}';
+
+      EWallet eWallet = EWallet(
+        eWalletId: eWalletId,
+        ownerId: cred.user!.uid,
+        balance: 0.0,
+      );
+
+      await firestore
+          .collection("eWallet")
+          .doc(eWalletId)
+          .set(eWallet.toJson());
     } on FirebaseAuthException catch (e) {
       Utils.showSnackBar(e.message);
     }
 
     navigatorKey.currentState!.popUntil((route) => route.isFirst);
   }
-
-  // Future createTourist({required String username, required int age}) async {
-  //   final docUser = FirebaseFirestore.instance.collection('tourists').doc();
-  //   final user = FirebaseAuth.instance.currentUser!;
-  //
-  //   final tourist = Tourists(
-  //     uid:
-  //
-  //     id: docUser.id,
-  //     username: username,
-  //     age: age,
-  //     birthday: DateTime(2004, 1, 1),
-  //   );
-  //   final json = testGuide.toJson();
-  //
-  //   await docUser.set(json);
-  // }
 }

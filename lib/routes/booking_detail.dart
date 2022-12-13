@@ -1,108 +1,195 @@
-// ignore_for_file: use_build_context_synchronously
+// ignore_for_file: use_build_context_synchronously, depend_on_referenced_packages
 
 import 'package:travel_guide_tourist/imports.dart';
+import 'package:intl/intl.dart';
 
 class BookingDetail extends StatefulWidget {
-  const BookingDetail({Key? key}) : super(key: key);
+  final String bookingId;
+
+  const BookingDetail({super.key, required this.bookingId});
 
   @override
   State<BookingDetail> createState() => _BookingDetailState();
 }
 
 class _BookingDetailState extends State<BookingDetail> {
-  final textController = TextEditingController();
+  bool isLoading = false;
+  var bookingData = {};
+  late String paymentStatus;
+  // final DateFormat formatter = DateFormat('dd MMM, H:mm');
+  String formatter = "dd MMM yyyy, H:mm";
+
+  @override
+  void initState() {
+    super.initState();
+    getData();
+  }
 
   @override
   void dispose() {
-    textController.dispose();
     super.dispose();
+  }
+
+  Future getData() async {
+    try {
+      setState(() {
+        isLoading = true;
+      });
+      var bookingSnap = await FirebaseFirestore.instance
+          .collection('bookings')
+          .doc(widget.bookingId)
+          .get();
+
+      bookingData = bookingSnap.data()!;
+      if (bookingData['isPaymentMade']) {
+        paymentStatus = 'Paid';
+      } else {
+        paymentStatus = 'Not Paid';
+      }
+
+      setState(() {
+        isLoading = false;
+      });
+      setState(() {});
+    } catch (e) {
+      Utils.showSnackBar(e.toString());
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    var data = (ModalRoute.of(context)!.settings.arguments as Map);
-    String paymentStatus;
-    if (data['isPaymentMade']) {
-      paymentStatus = 'Paid';
-    } else {
-      paymentStatus = 'Not Paid';
-    }
-
-    return Scaffold(
-      appBar: AppBar(title: const Text("Booking Detail")),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          // ListTile(
-          //   leading:
-          //   CircleAvatar(child: Image.network(data['photoUrl'].toString())),
-          //   title: Text(data['username']),
-          //   // subtitle: Text(language.toString()),
-          // ),
-          const SizedBox(height: 10.0),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTap: () {
+        FocusScopeNode currentFocus = FocusScope.of(context);
+        if (!currentFocus.hasPrimaryFocus &&
+            currentFocus.focusedChild != null) {
+          currentFocus.focusedChild?.unfocus();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(title: const Text("Booking Detail")),
+        body: isLoading ? LoadingView() : SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              const SizedBox(height: 10.0),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
                   children: [
-                    const Text("Booking Info: "),
-                    Text("Booking ID: ${data['bookingId']}"),
-                    Text("Package: ${data['packageId']}"),
-                    Text("Tour Guide ID : ${data['tourGuideId']}"),
-                    Text("Tourist ID : ${data['touristId']}"),
-                    Text("Price: ${data['price']}"),
-                    Text("Booking Date : ${data['bookingDate']}"),
-                    Text("Tour Date: ${data['tourDate']}"),
-                    Text("Status: ${data['status']}"),
-                    Text("Payment: $paymentStatus"),
-                    const SizedBox(height: 10.0),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text("Booking Info: "),
+                        Text("Booking ID: ${bookingData['bookingId']}"),
+                        Text("Package: ${bookingData['packageId']}"),
+                        Text("Tour Guide ID : ${bookingData['tourGuideId']}"),
+                        Text("Tourist ID : ${bookingData['touristId']}"),
+                        Text("Price: ${bookingData['price']}"),
+                        Text("Booking Date: ${DateFormat(formatter).format(bookingData['bookingDate'].toDate())}"),
+                        Text("Tour Date: ${DateFormat(formatter).format(bookingData['tourDate'].toDate())}"),
+                        Text("Status: ${bookingData['status']}"),
+                        Text("Payment: $paymentStatus"),
+                        const SizedBox(height: 10.0),
+                      ],
+                    ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10.0),
-          ElevatedButton(
-              onPressed: () async {
-                String feedbackId = 'feedback_${data['bookingId']}';
-                bool docExists = await checkIfDocExists(feedbackId);
-                if (!docExists) {
-                  Navigator.pushNamed(context, '/feedback', arguments: {
-                  'feedbackId': feedbackId,
-                  'tourGuideId': data['tourGuideId'],
-                  'touristId': data['touristId'],
-                });
-                } else {
+              ),
+              const SizedBox(height: 10.0),
+              ElevatedButton(
+                onPressed: () async {
                   await showDialog(
                     context: context,
                     builder: (BuildContext context) => AlertDialog(
-                      title: const Text('You Rated This Booking.'),
+                      title: const Text('Confirm To Complete?'),
                       content: const Text(
-                          'You can only rate the tour guide one time for each booking.'),
+                          'Are you confirm to mark this booking as Completed?'),
                       actions: <Widget>[
                         TextButton(
                           onPressed: () {
-                            Navigator.pop(context, 'OK');
+                            Navigator.pop(context, 'Not Now');
                           },
-                          child: const Text('OK'),
+                          child: const Text('Not Now'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            markAsCompleted(bookingData['bookingId']);
+                            Navigator.pop(context);
+                            getData();
+                          },
+                          child: const Text('Confirm'),
                         ),
                       ],
                     ),
                   );
-                }
-              },
-              child: const Text('Feedback to the Tour Guide'),
+                  ///TODO: change balance and payment status
+
+                },
+                child: const Text('Mark as Completed'),
+              ),
+              const SizedBox(height: 10.0),
+              ElevatedButton(
+                onPressed: () async {
+                  String feedbackId =
+                      'feedback_${bookingData['bookingId']}_${bookingData['touristId']}';
+                  bool docExists = await checkIfDocExists(feedbackId);
+                  if (bookingData['status'] != 'Completed') {
+                    await showDialog(
+                      context: context,
+                      builder: (BuildContext context) => AlertDialog(
+                        title: const Text('Booking Not Yet Complete.'),
+                        content: const Text(
+                            'You can only rate the tour guide after the booking is completed.'),
+                        actions: <Widget>[
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context, 'OK');
+                            },
+                            child: const Text('OK'),
+                          ),
+                        ],
+                      ),
+                    );
+                  } else if (!docExists &&
+                      (bookingData['status'] == 'Completed' ||
+                          bookingData['status'] == 'Rejected')) {
+                    Navigator.pushNamed(context, '/feedback', arguments: {
+                      'feedbackId': feedbackId,
+                      'tourGuideId': bookingData['tourGuideId'],
+                      'touristId': bookingData['touristId'],
+                    });
+                  } else {
+                    await showDialog(
+                      context: context,
+                      builder: (BuildContext context) => AlertDialog(
+                        title: const Text('You Rated This Booking.'),
+                        content: const Text(
+                            'You can only rate the tour guide one time for each booking.'),
+                        actions: <Widget>[
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context, 'OK');
+                            },
+                            child: const Text('OK'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                },
+                child: const Text('Feedback to the Tour Guide'),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
   Future<bool> checkIfDocExists(String docId) async {
     try {
-      // Get reference to Firestore collection
       var collectionRef = FirebaseFirestore.instance.collection('feedbacks');
       // int numberOfCollectionRef = await FirebaseFirestore.instance.collection('feedbacks').snapshots().length;
 
@@ -111,5 +198,15 @@ class _BookingDetailState extends State<BookingDetail> {
     } catch (e) {
       rethrow;
     }
+  }
+
+  void markAsCompleted(String bookingId) {
+    final docBooking =
+        FirebaseFirestore.instance.collection('bookings').doc(bookingId);
+    docBooking.update({
+      'status': 'Completed',
+    });
+
+    setState(() {});
   }
 }

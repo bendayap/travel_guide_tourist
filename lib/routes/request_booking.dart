@@ -3,7 +3,6 @@
 import 'package:travel_guide_tourist/imports.dart';
 
 class RequestBooking extends StatefulWidget {
-
   const RequestBooking({
     Key? key,
   }) : super(key: key);
@@ -17,13 +16,15 @@ class _RequestBookingState extends State<RequestBooking> {
   final budgetController = TextEditingController();
   final tourDateController = TextEditingController();
   final usernameController = TextEditingController();
+  DateTime selectedDate = DateTime.now().add(const Duration(days: 3));
+  final dateController = TextEditingController();
 
   @override
   void dispose() {
     budgetController.dispose();
     tourDateController.dispose();
     usernameController.dispose();
-
+    dateController.dispose();
     super.dispose();
   }
 
@@ -31,6 +32,20 @@ class _RequestBookingState extends State<RequestBooking> {
   Widget build(BuildContext context) {
     DateTime today = DateTime.now();
     var data = (ModalRoute.of(context)!.settings.arguments as Map);
+    dateController.text = selectedDate.toLocal().toString().split(' ')[0];
+    final customText = Theme(
+      data: ThemeData(
+        disabledColor: Colors.blueAccent,
+      ),
+      child: TextFormField(
+        controller: dateController,
+        enabled: false,
+        decoration: const InputDecoration(
+          border: OutlineInputBorder(),
+          labelText: 'Select Date',
+        ),
+      ),
+    );
 
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
@@ -56,38 +71,48 @@ class _RequestBookingState extends State<RequestBooking> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const SizedBox(height: 20),
-                Text('Package ID: ${data['packageId']}\nTour Guide ID: ${data['tourGuideId']}'),
+                Text(
+                    'Package ID: ${data['packageId']}\nTour Guide ID: ${data['tourGuideId']}'),
                 const SizedBox(height: 20),
-                // TextFormField(
-                //   ///Budget Field
-                //   controller: budgetController,
-                //   keyboardType: TextInputType.number,
-                //   inputFormatters: <TextInputFormatter>[
-                //     FilteringTextInputFormatter.digitsOnly
-                //   ],
-                //   textInputAction: TextInputAction.next,
-                //   decoration: const InputDecoration(labelText: 'Budget'),
-                //   autovalidateMode: AutovalidateMode.onUserInteraction,
-                //   validator: (value) => value != null && value.isEmpty
-                //       ? 'Enter a number'
-                //       : null,
-                // ),
+                Text('Price: ${data['price']}'),
+                const SizedBox(height: 20),
                 const SizedBox(height: 4),
-                // TextFormField(
-                //   ///Username Field
-                //   controller: usernameController,
-                //   textInputAction: TextInputAction.next,
-                //   decoration: const InputDecoration(labelText: 'Username'),
-                //   autovalidateMode: AutovalidateMode.onUserInteraction,
-                //   validator: (value) => value != null && value.isEmpty
-                //       ? 'Enter a username'
-                //       : null,
+                // InputDatePickerFormField(
+                //     initialDate: today,
+                //     firstDate: DateTime(2000),
+                //     lastDate: DateTime(2100),
                 // ),
-                const SizedBox(height: 4),
-                InputDatePickerFormField(
-                    initialDate: today,
-                    firstDate: DateTime(2000),
-                    lastDate: DateTime(2100),
+                // InkWell(
+                //   onTap: () {
+                //     _selectDate(context);
+                //   },
+                //   child: Text(
+                //       "Select Date: ${selectedDate.toLocal().toString().split(' ')[0]}",
+                //     style: const TextStyle(fontSize: 20),
+                //   ),
+                // ),
+                InkWell(
+                  onTap: () {
+                    _selectDate(context);
+                  },
+                  child: customText,
+                  // child: TextFormField(
+                  //   ///Date Display Field
+                  //   enabled: false,
+                  //   disabledColor: Colors.blueAccent,
+                  //   controller: dateController,
+                  //   textInputAction: TextInputAction.done,
+                  //   keyboardType: TextInputType.number,
+                  //   decoration: const InputDecoration(
+                  //     // prefixIcon: Padding(
+                  //     //   padding: EdgeInsets.all(8.0),
+                  //     // ),
+                  //     border: OutlineInputBorder(
+                  //       borderSide: BorderSide(color: Colors.blueAccent),
+                  //     ),
+                  //     label: Text('Select Date'),
+                  //   ),
+                  // ),
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton.icon(
@@ -100,9 +125,9 @@ class _RequestBookingState extends State<RequestBooking> {
                     style: TextStyle(fontSize: 24),
                   ),
                   onPressed: () {
-                    ///TODO: select date
-                    final tourDate = today;
-                    requestBooking(data['packageId'], data['tourGuideId'], data['price'], today, tourDate);
+                    final tourDate = selectedDate;
+                    requestBooking(data['packageId'], data['tourGuideId'],
+                        data['price'], today, tourDate);
                   },
                 ),
                 const SizedBox(height: 20),
@@ -114,8 +139,8 @@ class _RequestBookingState extends State<RequestBooking> {
     );
   }
 
-  Future requestBooking(String packageId, String tourGuideId, num price, DateTime today, DateTime tourDate)
-  async {
+  Future requestBooking(String packageId, String tourGuideId, num price,
+      DateTime today, DateTime tourDate) async {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -136,24 +161,33 @@ class _RequestBookingState extends State<RequestBooking> {
         price: price,
         bookingDate: today,
         tourDate: tourDate,
-        );
+      );
 
       await firestore
           .collection("bookings")
           .doc(bookingId)
           .set(booking.toJson());
+
+      ///TODO: deduct balance and balance checking
+
     }
 
     Navigator.popUntil(context, ModalRoute.withName('/tour_guide_list'));
     Utils.showSnackBarSuccess('Booking Request Sent');
   }
 
-  Future<DateTime?> pickDate(DateTime today) => showDatePicker(
-    context: context,
-    initialDate: today,
-    firstDate: DateTime(2000),
-    lastDate: DateTime(2100),
-  );
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+        context: context,
+        initialDate: selectedDate,
+        firstDate: selectedDate,
+        lastDate: DateTime(2101));
+    if (picked != null && picked != selectedDate) {
+      setState(() {
+        selectedDate = picked;
+      });
+    }
+  }
 
 // Future createTourist({required String username, required int age}) async {
 //   final docUser = FirebaseFirestore.instance.collection('tourists').doc();

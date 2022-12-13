@@ -1,28 +1,24 @@
 import 'package:travel_guide_tourist/imports.dart';
 
-class WalletPage extends StatefulWidget {
+class WalletPage extends StatelessWidget {
   const WalletPage({super.key});
 
   @override
-  State<WalletPage> createState() => _WalletPageState();
-}
-
-class _WalletPageState extends State<WalletPage> {
-
-  @override
-  void initState() {
-    ///TODO: Implement statement
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppTheme.mainBackground,
-    appBar: AppBar(
-      title: const Text('Wallet'),
-      backgroundColor: AppTheme.mainAppBar,
-      centerTitle: true,
+    body:
+    StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return const Center(child: Text('Something went wrong!'));
+        } else if (snapshot.hasData) {
+          return const WalletScreen();
+        } else {
+          return const WalletNonLoginScreen();
+        }
+      },
     ),
-    body: const Center(child: Text('Wallet', style: TextStyle(fontSize: 60))),
   );
 }

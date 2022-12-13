@@ -2,16 +2,16 @@ import 'package:travel_guide_tourist/imports.dart';
 
 class HistoryFeedback {
   final String feedbackId;
-  final String tourGuideId;
-  final String touristId;
+  final String toId;
+  final String fromId;
   final DateTime feedbackDate;
   final String content;
   final num rating;
 
   const HistoryFeedback({
     this.feedbackId = '',
-    required this.tourGuideId,
-    required this.touristId,
+    required this.toId,
+    required this.fromId,
     required this.feedbackDate,
     required this.content,
     required this.rating,
@@ -19,8 +19,8 @@ class HistoryFeedback {
 
   static HistoryFeedback fromJson(Map<String, dynamic>json) => HistoryFeedback(
     feedbackId: json['feedbackId'],
-    tourGuideId: json['tourGuideId'],
-    touristId: json['touristId'],
+    toId: json['toId'],
+    fromId: json['fromId'],
     feedbackDate: (json['feedbackDate'] as Timestamp).toDate(),
     content: json['content'],
     rating: json['rating'],
@@ -28,8 +28,8 @@ class HistoryFeedback {
 
   Map<String, dynamic> toJson() => {
     'feedbackId': feedbackId,
-    'tourGuideId': tourGuideId,
-    'touristId': touristId,
+    'toId': toId,
+    'fromId': fromId,
     'feedbackDate': feedbackDate,
     'content': content,
     'rating': rating,

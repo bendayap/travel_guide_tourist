@@ -10,65 +10,52 @@ class TourGuideNearby extends StatefulWidget {
 class _TourGuideNearbyState extends State<TourGuideNearby> {
 
   @override
-  void initState() {
-    ///TODO: Implement statement
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
     var data = (ModalRoute.of(context)!.settings.arguments as Map);
     String currentAddress = data['currentAddress'];
     num currentLat = data['currentLat'];
     num currentLng = data['currentLng'];
 
+    var onDutyList = data['onDutyList'];
+
     Widget buildTourGuide(TourGuide tourGuide) => Card(
           child: ListTile(
             onTap: () {
               ///pass arguments to route
-              Navigator.pushNamed(context, '/tour_guide_nearby_detail', arguments: {
-                'uid': tourGuide.uid,
-                'username': tourGuide.username,
-                'fullname': tourGuide.fullname,
-                'phoneNumber': tourGuide.phoneNumber,
-                'email': tourGuide.email,
-                'isEmailVerified': tourGuide.isEmailVerified,
-                'icNumber': tourGuide.icNumber,
-                'isIcVerified': tourGuide.isIcVerified,
-                'photoUrl': tourGuide.photoUrl,
-                'description': tourGuide.description,
-                'language': tourGuide.language,
-                'rating': tourGuide.rating,
-                'rateNumber': tourGuide.rateNumber,
-                'totalDone': tourGuide.totalDone,
-                'grade': tourGuide.grade,
-                'currentAddress': currentAddress,
-              });
+              Navigator.pushNamed(context, '/tour_guide_nearby_detail',
+                  arguments: {
+                    'uid': tourGuide.uid,
+                    'username': tourGuide.username,
+                    'fullname': tourGuide.fullname,
+                    'phoneNumber': tourGuide.phoneNumber,
+                    'email': tourGuide.email,
+                    'isEmailVerified': tourGuide.isEmailVerified,
+                    'icNumber': tourGuide.icNumber,
+                    'isIcVerified': tourGuide.isIcVerified,
+                    'photoUrl': tourGuide.photoUrl,
+                    'description': tourGuide.description,
+                    'language': tourGuide.language,
+                    'rating': tourGuide.rating,
+                    'rateNumber': tourGuide.rateNumber,
+                    'totalDone': tourGuide.totalDone,
+                    'grade': tourGuide.grade,
+                    'currentAddress': currentAddress,
+                    'currentLat': currentLat,
+                    'currentLng': currentLng,
+                  });
             },
             leading: CircleAvatar(child: Image.network(tourGuide.photoUrl)),
             title: Text(tourGuide.username),
+            // trailing: Padding(
+            //   padding: EdgeInsets.all(3.0),
+            //   child: ,
+            // ),
           ),
         );
 
-
-    // List<String> strList;
-    // FirebaseFirestore.instance.collection('instantOrder')
-    //     .where('onDuty', isEqualTo: true).get().then((snapshot) => {
-    //       snapshot.docs.forEach((doc){
-    //         strList.add(doc.data['ownerId']);
-    //       })
-    // });
-
-    Stream<List<TourGuide>> readInstantOrder = FirebaseFirestore.instance.collection('instantOrder')
-         .where('onDuty', isEqualTo: true)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-        .map((doc) => TourGuide.fromJson(doc.data()))
-        .toList());
-
     Stream<List<TourGuide>> readTourGuides() => FirebaseFirestore.instance
         .collection('tourGuides')
-        // .where('isIcVerified', isEqualTo: false)
+        .where('uid', whereIn: onDutyList) //filter where in
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => TourGuide.fromJson(doc.data()))
@@ -85,6 +72,7 @@ class _TourGuideNearbyState extends State<TourGuideNearby> {
             const SizedBox(height: 10.0),
             Text('Your Location: \n$currentAddress'),
             const SizedBox(height: 10.0),
+            Text('${onDutyList.length}'),
             const Text('Tour Guide Near You'),
             // Text('$instantOrder'),
             const SizedBox(height: 10.0),
@@ -95,18 +83,6 @@ class _TourGuideNearbyState extends State<TourGuideNearby> {
                   if (snapshot.hasError) {
                     return Text('Something went wrong! ${snapshot.error}');
                   } else if (snapshot.hasData) {
-                    ///TODO: this
-                    // return ListView(children: snapshot.data!.map((doc){
-                    //
-                    // }).toList());
-
-                      // return StreamBuilder<List<InstantOrder>> (
-                      //   stream: readInstantOrder,
-                      //   builder: (context, snapshot){
-                      //
-                      //   },
-                      // );
-                    ///Ori code
                     final tourGuides = snapshot.data!;
 
                     return ListView(
@@ -135,4 +111,22 @@ class _TourGuideNearbyState extends State<TourGuideNearby> {
     /// return as distance in Meters
     return distanceInKiloMeters * 1000;
   }
+
+  // getInstant() async {
+  //   InstantOrder instantOrder;
+  //   await FirebaseFirestore.instance
+  //   .collection('instantOrder')
+  //   // .where('onDuty', isEqualTo: true)
+  //       .get()
+  //       .then((value) => {
+  //     value.docs.forEach((doc) {
+  //       // instantOrder = InstantOrder.fromJson(doc.data());
+  //       // onDutyList.add(instantOrder.ownerID);
+  //       // onDutyList.add(doc.data()['ownerID'].toString());
+  //       onDutyList.add(doc.data()['ownerID']);
+  //       // onDutyList.add('pp123');
+  //     })
+  //   });
+  //   // onDutyList.add('ww');
+  // }
 }
