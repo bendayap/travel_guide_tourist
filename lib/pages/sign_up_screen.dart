@@ -1,4 +1,6 @@
 import 'package:travel_guide_tourist/imports.dart';
+import 'package:travel_guide_tourist/pages/sign_up_admin.dart';
+// import '../images/travel_guide_logo.png';
 
 class SignUpScreen extends StatefulWidget {
   final Function() onClickedSignIn;
@@ -52,13 +54,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const SizedBox(height: 60),
-                  // const FlutterLogo(size: 120),
+                  // Image.file(File("/images/travel_guide_logo.png")),
                   const SizedBox(height: 20),
-                  const Text(
-                    'Hey There, \n Welcome back',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 32),
-                  ),
+                  // const Text(
+                  //   'Hey There, \n Welcome back',
+                  //   textAlign: TextAlign.center,
+                  //   style: TextStyle(fontSize: 32),
+                  // ),
                   const SizedBox(height: 40),
                   TextFormField(
                     ///Email Field
@@ -123,7 +125,25 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         )
                       ],
                     ),
-                  )
+                  ),
+                  const SizedBox(height: 20),
+                  InkWell(
+                    onTap: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SignUpAdminScreen(),
+                        ),
+                      );
+                    },
+                    child: Text(
+                      'Sign Up as Admin',
+                      style: TextStyle(
+                        decoration: TextDecoration.underline,
+                        color: Theme.of(context).colorScheme.secondary,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -161,7 +181,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
         phoneNumber: "",
         email: email,
         icNumber: "",
-        photoUrl: "",
         description: "",
         rating: 0.0,
         icVerified: false,

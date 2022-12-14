@@ -65,6 +65,8 @@ export 'routes/transaction_detail.dart';
 export 'routes/chatroom_list.dart';
 export 'routes/chatroom_screen.dart';
 export 'routes/edit_profile.dart';
+export 'routes/tourist_order_list.dart';
+export 'routes/order_detail.dart';
 
 ///ui_view
 export 'ui_view/message_card.dart';

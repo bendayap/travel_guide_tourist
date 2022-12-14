@@ -8,7 +8,7 @@ class OrderRequest {
   final DateTime startTime;
   final DateTime endTime;
   final String status; //Pending, Accepted, Rejected, Cancelled, Completed
-  final num paymentAmount;
+  final double paymentAmount;
   final bool isPaymentMade;
   final double currentLatitude;
   final double currentLongitude;
@@ -21,7 +21,7 @@ class OrderRequest {
     required this.startTime,
     required this.endTime,
     this.status = 'Pending',
-    this.paymentAmount = 0,
+    this.paymentAmount = 0.0,
     this.isPaymentMade = false,
   required this.currentLatitude,
   required this.currentLongitude,

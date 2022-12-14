@@ -67,7 +67,7 @@ class _FeedbackToTourGuideState extends State<FeedbackToTourGuide> {
                   decoration: const InputDecoration(labelText: 'Rating'),
                   autovalidateMode: AutovalidateMode.onUserInteraction,
                   validator: (value) => value != null && value.isEmpty
-                      ? 'Enter a number'
+                      ? 'Enter a number between 1 and 5'
                       : null,
                 ),
                 const SizedBox(height: 4),
@@ -108,7 +108,6 @@ class _FeedbackToTourGuideState extends State<FeedbackToTourGuide> {
       builder: (context) => const Center(child: CircularProgressIndicator()),
     );
 
-    if (FirebaseAuth.instance.currentUser != null) {
       final FirebaseFirestore firestore = FirebaseFirestore.instance;
       var content = contentController.text;
       var rating = num.parse(ratingController.text);
@@ -127,18 +126,21 @@ class _FeedbackToTourGuideState extends State<FeedbackToTourGuide> {
           .doc(feedbackId)
           .set(feedback.toJson());
 
-      ///TODO: Update Tour Guide Rating and RateNumber
-      // num currentRating;
-      // await firestore.collection('tourGuides').get().then((snapshot) {
-      //   currentRating = snapshot.data['rating'] * snapshot.data['rateNumber'];
-      // });
+      num currentRating;
+      final docTourGuide = FirebaseFirestore.instance
+          .collection('tourGuides')
+          .doc(tourGuideId);
+      var docTourGuideSnap = await docTourGuide.get();
+      var docTourGuideData = docTourGuideSnap.data()!;
 
-      // final tourGuideDoc = firestore.collection('tourGuides')
-      //     .doc(tourGuideId);
-      // tourGuideDoc.update({
-      //   'rating':
-      // })
-    }
+      currentRating = docTourGuideData['rating'] * docTourGuideData['rateNumber'];
+      num newRateNumber = docTourGuideData['rateNumber']+1;
+      num newRating = (currentRating + rating) / newRateNumber;
+
+    docTourGuide.update({
+      'rateNumber': newRateNumber,
+      'rating': newRating,
+    });
 
     navigatorKey.currentState!.pop();
     navigatorKey.currentState!.pop();

@@ -5,21 +5,21 @@ import 'package:intl/intl.dart';
 
 import '../models/transaction_records.dart';
 
-class BookingDetail extends StatefulWidget {
-  final String bookingId;
+class OrderDetail extends StatefulWidget {
+  final String orderId;
 
-  const BookingDetail({super.key, required this.bookingId});
+  const OrderDetail({super.key, required this.orderId});
 
   @override
-  State<BookingDetail> createState() => _BookingDetailState();
+  State<OrderDetail> createState() => _OrderDetailState();
 }
 
-class _BookingDetailState extends State<BookingDetail> {
+class _OrderDetailState extends State<OrderDetail> {
   bool isLoading = false;
-  var bookingData = {};
+  var orderData = {};
   late String paymentStatus;
-
-  // final DateFormat formatter = DateFormat('dd MMM, H:mm');
+  String startTime = 'Not Start Yet';
+  String endTime = 'Not Completed Yet';
   String formatter = "dd MMM yyyy, H:mm";
 
   @override
@@ -38,16 +38,35 @@ class _BookingDetailState extends State<BookingDetail> {
       setState(() {
         isLoading = true;
       });
-      var bookingSnap = await FirebaseFirestore.instance
-          .collection('bookings')
-          .doc(widget.bookingId)
+      var orderSnap = await FirebaseFirestore.instance
+          .collection('orderRequests')
+          .doc(widget.orderId)
           .get();
 
-      bookingData = bookingSnap.data()!;
-      if (bookingData['isPaymentMade']) {
+      orderData = orderSnap.data()!;
+      if (orderData['isPaymentMade']) {
         paymentStatus = 'Paid';
       } else {
         paymentStatus = 'Not Paid';
+      }
+
+      if (orderData['status'] == 'Rejected') {
+        startTime = 'Order Rejected';
+        endTime = 'Order Rejected';
+      } else if (orderData['status'] == 'Cancelled') {
+        startTime = 'Order Cancelled';
+        endTime = 'Order Cancelled';
+      } else if (orderData['startTime'] == orderData['endTime']) {
+      } else if (orderData['startTime']
+          .toDate()
+          .isAfter(orderData['endTime'].toDate())) {
+        startTime =
+            DateFormat(formatter).format(orderData['startTime'].toDate());
+        endTime = 'Not Completed Yet';
+      } else {
+        startTime =
+            DateFormat(formatter).format(orderData['startTime'].toDate());
+        endTime = DateFormat(formatter).format(orderData['endTime'].toDate());
       }
 
       setState(() {
@@ -71,7 +90,7 @@ class _BookingDetailState extends State<BookingDetail> {
         }
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text("Booking Detail")),
+        appBar: AppBar(title: const Text("Order Detail")),
         body: isLoading
             ? LoadingView()
             : SingleChildScrollView(
@@ -86,18 +105,19 @@ class _BookingDetailState extends State<BookingDetail> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text("Booking Info: "),
-                              Text("Booking ID: ${bookingData['bookingId']}"),
-                              Text("Package: ${bookingData['packageId']}"),
+                              const Text("Order Info: "),
+                              Text("Order ID: ${orderData['orderId']}"),
+                              Text("Location: ${orderData['address']}"),
                               Text(
-                                  "Tour Guide ID : ${bookingData['tourGuideId']}"),
-                              Text("Tourist ID : ${bookingData['touristId']}"),
-                              Text("Price: ${bookingData['price']}"),
+                                  "Tour Guide ID : ${orderData['tourGuideId']}"),
+                              Text("Tourist ID : ${orderData['touristId']}"),
                               Text(
-                                  "Booking Date: ${DateFormat(formatter).format(bookingData['bookingDate'].toDate())}"),
-                              Text(
-                                  "Tour Date: ${DateFormat(formatter).format(bookingData['tourDate'].toDate())}"),
-                              Text("Status: ${bookingData['status']}"),
+                                  "Payment amount: ${orderData['paymentAmount']}"),
+                              // Text("Start Time: ${DateFormat(formatter).format(orderData['startTime'].toDate())}"),
+                              // Text("End Time: ${DateFormat(formatter).format(orderData['endTime'].toDate())}"),
+                              Text("Start Time: $startTime"),
+                              Text("End Time: $endTime"),
+                              Text("Status: ${orderData['status']}"),
                               Text("Payment: $paymentStatus"),
                               const SizedBox(height: 10.0),
                             ],
@@ -108,13 +128,13 @@ class _BookingDetailState extends State<BookingDetail> {
                     const SizedBox(height: 10.0),
                     ElevatedButton(
                       onPressed: () async {
-                        if (bookingData['status'] == 'Completed') {
+                        if (orderData['status'] == 'Completed') {
                           await showDialog(
                             context: context,
                             builder: (BuildContext context) => AlertDialog(
                               title: const Text('Already Completed'),
-                              content: const Text(
-                                  'The booking is already completed'),
+                              content:
+                                  const Text('The order is already completed'),
                               actions: <Widget>[
                                 TextButton(
                                   onPressed: () {
@@ -125,13 +145,13 @@ class _BookingDetailState extends State<BookingDetail> {
                               ],
                             ),
                           );
-                        } else if (bookingData['status'] == 'Pending') {
+                        } else if (orderData['status'] == 'Pending') {
                           await showDialog(
                             context: context,
                             builder: (BuildContext context) => AlertDialog(
                               title: const Text('Not Started Yet'),
-                              content: const Text(
-                                  'The booking has not been processed.'),
+                              content:
+                                  const Text('The order is not yet started'),
                               actions: <Widget>[
                                 TextButton(
                                   onPressed: () {
@@ -142,12 +162,12 @@ class _BookingDetailState extends State<BookingDetail> {
                               ],
                             ),
                           );
-                        } else if (bookingData['status'] == 'Cancelled') {
+                        } else if (orderData['status'] == 'Cancelled') {
                           await showDialog(
                             context: context,
                             builder: (BuildContext context) => AlertDialog(
-                              title: const Text('Booking Has Been Cancelled'),
-                              content: const Text('The booking is cancelled'),
+                              title: const Text('Order Has Been Cancelled'),
+                              content: const Text('The order is cancelled'),
                               actions: <Widget>[
                                 TextButton(
                                   onPressed: () {
@@ -164,7 +184,7 @@ class _BookingDetailState extends State<BookingDetail> {
                             builder: (BuildContext context) => AlertDialog(
                               title: const Text('Confirm To Complete?'),
                               content: const Text(
-                                  'Are you confirm to mark this booking as Completed?'),
+                                  'Are you confirm to mark this order as Completed?'),
                               actions: <Widget>[
                                 TextButton(
                                   onPressed: () {
@@ -173,12 +193,11 @@ class _BookingDetailState extends State<BookingDetail> {
                                   child: const Text('Not Now'),
                                 ),
                                 TextButton(
-                                  onPressed: () {
-                                    markAsCompleted(
-                                      bookingData['bookingId'],
-                                      bookingData['tourGuideId'],
-                                      bookingData['price'],
-                                    );
+                                  onPressed: () async {
+                                    await markAsCompleted(
+                                        orderData['orderId'],
+                                        orderData['tourGuideId'],
+                                        orderData['paymentAmount']);
                                     Navigator.pop(context);
                                     getData();
                                   },
@@ -195,15 +214,15 @@ class _BookingDetailState extends State<BookingDetail> {
                     ElevatedButton(
                       onPressed: () async {
                         String feedbackId =
-                            'feedback_${bookingData['bookingId']}_${bookingData['touristId']}';
+                            'feedback_${orderData['orderId']}_${orderData['touristId']}';
                         bool docExists = await checkIfDocExists(feedbackId);
-                        if (bookingData['status'] != 'Completed' && bookingData['status'] != 'Rejected' ) {
+                        if (orderData['status'] != 'Completed') {
                           await showDialog(
                             context: context,
                             builder: (BuildContext context) => AlertDialog(
-                              title: const Text('Booking Not Yet Complete.'),
+                              title: const Text('Order Not Yet Complete.'),
                               content: const Text(
-                                  'You can only rate the tour guide after the booking is completed.'),
+                                  'You can only rate the tour guide after the order is completed.'),
                               actions: <Widget>[
                                 TextButton(
                                   onPressed: () {
@@ -215,20 +234,20 @@ class _BookingDetailState extends State<BookingDetail> {
                             ),
                           );
                         } else if (!docExists &&
-                            (bookingData['status'] == 'Completed' ||
-                                bookingData['status'] == 'Rejected')) {
+                            (orderData['status'] == 'Completed' ||
+                                orderData['status'] == 'Rejected')) {
                           Navigator.pushNamed(context, '/feedback', arguments: {
                             'feedbackId': feedbackId,
-                            'tourGuideId': bookingData['tourGuideId'],
-                            'touristId': bookingData['touristId'],
+                            'tourGuideId': orderData['tourGuideId'],
+                            'touristId': orderData['touristId'],
                           });
                         } else {
                           await showDialog(
                             context: context,
                             builder: (BuildContext context) => AlertDialog(
-                              title: const Text('You Rated This Booking.'),
+                              title: const Text('You Rated This Order.'),
                               content: const Text(
-                                  'You can only rate the tour guide one time for each booking.'),
+                                  'You can only rate the tour guide one time for each order.'),
                               actions: <Widget>[
                                 TextButton(
                                   onPressed: () {
@@ -245,13 +264,13 @@ class _BookingDetailState extends State<BookingDetail> {
                     ),
                     ElevatedButton(
                       onPressed: () async {
-                        if (bookingData['status'] != 'Pending') {
+                        if (orderData['status'] != 'Pending') {
                           await showDialog(
                             context: context,
                             builder: (BuildContext context) => AlertDialog(
-                              title: const Text('Booking Has Been Processed'),
+                              title: const Text('Order Has Been Processed'),
                               content: const Text(
-                                  'Only booking in pending status can be cancelled'),
+                                  'Only order in pending status can be cancelled'),
                               actions: <Widget>[
                                 TextButton(
                                   onPressed: () {
@@ -262,14 +281,14 @@ class _BookingDetailState extends State<BookingDetail> {
                               ],
                             ),
                           );
-                        } else if (bookingData['status'] == 'Pending') {
+                        } else if (orderData['status'] == 'Pending') {
                           await showDialog(
                             context: context,
                             builder: (BuildContext context) => AlertDialog(
                               title: const Text('Confirm to Cancel?'),
                               content: const Text(
-                                  'Are you confirm to cancel the booking?'
-                                      '(Fund will be refunded to your wallet)'),
+                                  'Are you confirm to cancel the order?'
+                                  '(Fund will be refunded to your wallet)'),
                               actions: <Widget>[
                                 TextButton(
                                   onPressed: () {
@@ -279,7 +298,7 @@ class _BookingDetailState extends State<BookingDetail> {
                                 ),
                                 TextButton(
                                   onPressed: () {
-                                    cancelOrder(bookingData['orderId']);
+                                    cancelOrder(orderData['orderId']);
                                     Navigator.pop(context);
                                     getData();
                                   },
@@ -290,9 +309,8 @@ class _BookingDetailState extends State<BookingDetail> {
                           );
                         }
                       },
-                      child: const Text('Cancel Booking'),
+                      child: const Text('Cancel Order'),
                     ),
-
                   ],
                 ),
               ),
@@ -313,7 +331,7 @@ class _BookingDetailState extends State<BookingDetail> {
   }
 
   Future<void> markAsCompleted(
-      String bookingId, String tourGuideId, double price) async {
+      String orderId, String tourGuideId, double fund) async {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -322,19 +340,93 @@ class _BookingDetailState extends State<BookingDetail> {
 
     // try {
     final user = FirebaseAuth.instance.currentUser!;
+    DateTime end = DateTime.now();
+    DateTime start = orderData['startTime'].toDate();
+    int duration = end.difference(start).inHours;
+    if (end.minute >= 30) {
+      duration += 1;
+    }
 
-    ///Update booking status
-    final docBooking =
-        FirebaseFirestore.instance.collection('bookings').doc(bookingId);
-    docBooking.update({
-      'status': 'Completed',
-      'isPaymentMade': true,
+    var instantOrderSnap = await FirebaseFirestore.instance
+        .collection('instantOrder')
+        .doc("instant_$tourGuideId")
+        .get();
+    var instantOrderData = instantOrderSnap.data()!;
+    int priceInInt = instantOrderData['price'] * duration;
+    double price = priceInInt.toDouble();
+
+    ///update balance
+    final docWallet = FirebaseFirestore.instance
+        .collection('eWallet')
+        .doc('ewallet_${user.uid}');
+    var eWalletSnap = await docWallet.get();
+    var docWalletData = eWalletSnap.data()!;
+    double toRefund = fund - price;
+    double newBalance = docWalletData['balance'] + toRefund;
+
+    docWallet.update({
+      'balance': newBalance,
     });
+
+    ///Add Transaction
+    String transactionId = "OrderComplete_$orderId";
+    String transactionAmount = "+RM ${toRefund.toString()}";
+    String ownerId = user.uid;
+    // late String receiveFrom;
+    String transferTo = ownerId;
+    String transactionType = "Refund";
+    String paymentDetails = "Order completed, Returning remaining fund";
+    String paymentMethod = "eWallet Balance";
+    String status = "Successfully";
+    double newWalletBalance = newBalance;
+    DateTime dateTime = DateTime.now();
+
+    TouristTransaction transaction = TouristTransaction(
+      transactionId: transactionId,
+      transactionAmount: transactionAmount,
+      ownerId: ownerId,
+      // receiveFrom: receiveFrom,
+      transferTo: transferTo,
+      transactionType: transactionType,
+      paymentDetails: paymentDetails,
+      paymentMethod: paymentMethod,
+      newWalletBalance: newWalletBalance,
+      dateTime: dateTime,
+      status: status,
+    );
+
+    await FirebaseFirestore.instance
+        .collection("touristTransactions")
+        .doc(transactionId)
+        .set(transaction.toJson());
+
+    var startTime = orderData['startTime'].toDate();
+
+    ///update order request
+    OrderRequest orderRequest = OrderRequest(
+      orderId: orderId,
+      tourGuideId: tourGuideId,
+      touristId: user.uid,
+      address: orderData['address'],
+      // startTime: orderData[startTime],
+      startTime: startTime,
+      endTime: DateTime.now(),
+      currentLatitude: orderData['currentLatitude'],
+      currentLongitude: orderData['currentLongitude'],
+      status: "Completed",
+      paymentAmount: price,
+      isPaymentMade: true,
+    );
+
+    await FirebaseFirestore.instance
+        .collection("orderRequests")
+        .doc(orderId)
+        .set(orderRequest.toJson());
 
     ///Update transaction status
     final docTransaction = FirebaseFirestore.instance
         .collection('touristTransactions')
-        .doc("BookingRequest_$bookingId");
+        .doc("OrderRequest_$orderId");
     docTransaction.update({
       'status': 'Successfully',
     });
@@ -352,10 +444,10 @@ class _BookingDetailState extends State<BookingDetail> {
     TransactionRecord tourGuideTransaction = TransactionRecord(
       transactionId: tourGuideTransactionId,
       transactionAmount: "+RM ${price.toString()}",
-      receiveFrom: 'Tour Package Booking',
+      receiveFrom: "Instant ORder",
       ownerId: tourGuideId,
-      transactionType: "Booking Completed",
-      paymentDetails: "Booking Completed $bookingId",
+      transactionType: "Order Completed",
+      paymentDetails: "Order Completed $orderId",
       paymentMethod: "eWallet Balance",
       newWalletBalance: newTourGuideWalletBalance,
       dateTime: DateTime.now(),
@@ -370,6 +462,10 @@ class _BookingDetailState extends State<BookingDetail> {
         .collection("transactions")
         .doc(tourGuideTransactionId)
         .set(tourGuideTransaction.toJson());
+
+    // } on FirebaseAuthException catch (e) {
+    //   Utils.showSnackBar(e.toString());
+    // }
 
     setState(() {});
     navigatorKey.currentState?.pop();
@@ -387,7 +483,7 @@ class _BookingDetailState extends State<BookingDetail> {
 
     ///update order status
     final docOrder =
-    FirebaseFirestore.instance.collection('orderRequests').doc(orderId);
+        FirebaseFirestore.instance.collection('orderRequests').doc(orderId);
     docOrder.update({
       'status': 'Cancelled',
     });
@@ -398,7 +494,7 @@ class _BookingDetailState extends State<BookingDetail> {
         .doc('ewallet_${user.uid}');
     var eWalletSnap = await docWallet.get();
     var docWalletData = eWalletSnap.data()!;
-    double toRefund = bookingData['paymentAmount'];
+    double toRefund = orderData['paymentAmount'];
     double newBalance = docWalletData['balance'] + toRefund;
 
     docWallet.update({
@@ -418,15 +514,15 @@ class _BookingDetailState extends State<BookingDetail> {
     ///add transaction
     TouristTransaction touristTransaction = TouristTransaction(
       transactionId: transactionId,
-      transferTo: user.uid,
-      transactionAmount: "+RM ${toRefund.toString()}",
-      ownerId: user.uid,
-      transactionType: "Order Cancelled",
-      paymentDetails: "Refund from cancelling order",
-      paymentMethod: "eWallet Balance",
-      newWalletBalance: docWalletData['balance'] + toRefund,
-      dateTime: DateTime.now(),
-      status: "Successfully",
+        transferTo: user.uid,
+        transactionAmount: "+RM ${toRefund.toString()}",
+        ownerId: user.uid,
+        transactionType: "Order Cancelled",
+        paymentDetails: "Refund from cancelling order",
+        paymentMethod: "eWallet Balance",
+        newWalletBalance: docWalletData['balance'] + toRefund,
+        dateTime: DateTime.now(),
+        status: "Successfully",
     );
 
     await FirebaseFirestore.instance
@@ -438,5 +534,4 @@ class _BookingDetailState extends State<BookingDetail> {
     navigatorKey.currentState?.pop();
     Utils.showSnackBarSuccess('Order Cancelled');
   }
-
 }

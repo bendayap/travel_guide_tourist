@@ -107,17 +107,37 @@ class _EditProfileState extends State<EditProfile> {
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton(
-                    onPressed: () {
-                      pickImageFromGallery();
+                    onPressed: () async {
+                      await showDialog(
+                          context: context,
+                          builder: (BuildContext context) => AlertDialog(
+                        title: const Text('Change Picture.'),
+                        actions: <Widget>[
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context, 'Cancel');
+                            },
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              pickImageFromGallery();
+                              Navigator.pop(context);
+                            },
+                            child: const Text('Gallery'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              pickImageFromCamera();
+                              Navigator.pop(context);
+                            },
+                            child: const Text('Camera'),
+                          ),
+                        ],
+                      ),
+                      );
                     },
-                    child: const Text('image from gallery'),
-                  ),
-                  const SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: () {
-                      pickImageFromCamera();
-                    },
-                    child: const Text('image from camera'),
+                    child: const Text('Upload Image'),
                   ),
                   const SizedBox(height: 10),
                   TextFormField(

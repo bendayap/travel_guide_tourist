@@ -1,5 +1,8 @@
 import 'package:travel_guide_tourist/imports.dart';
 
+import '../routes/verify_ic_view.dart';
+import 'admin_profile_screen.dart';
+
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
 
@@ -9,11 +12,11 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   var touristData = {};
+  bool isAdmin = false;
   bool isLoading = false;
 
   @override
   void initState() {
-    ///TODO: Implement statement
     super.initState();
     getData();
   }
@@ -23,12 +26,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         isLoading = true;
       });
-      var touristSnap = await FirebaseFirestore.instance
-          .collection('tourists')
-          .doc(FirebaseAuth.instance.currentUser!.uid)
-          .get();
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null) {
+        var collectionRef = FirebaseFirestore.instance.collection('admins');
+        var doc = await collectionRef.doc(currentUser.uid).get();
+        if (doc.exists) {
+          isAdmin = true;
+        }
+      }
 
-      touristData = touristSnap.data()!;
+      if (!isAdmin) {
+        var touristSnap = await FirebaseFirestore.instance
+            .collection('tourists')
+            .doc(FirebaseAuth.instance.currentUser!.uid)
+            .get();
+
+        touristData = touristSnap.data()!;
+      }
       setState(() {
         isLoading = false;
       });
@@ -42,7 +56,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser!;
 
-    return isLoading ? LoadingView() : GestureDetector(
+    if (isAdmin) {
+      return const AdminProfileScreen();
+    } else {
+      return isLoading ? LoadingView() : GestureDetector(
       behavior: HitTestBehavior.translucent,
       onTap: () {
         FocusScopeNode currentFocus = FocusScope.of(context);
@@ -124,39 +141,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton.icon(
-                  // style: ElevatedButton.styleFrom(
-                  //   minimumSize: const Size.fromHeight(50),
-                  // ),
                   ///TODO: Submit IC
                   icon: const Icon(
                     Icons.edit,
                     // size: 32,
                   ),
                   label: const Text(
-                    'Submit Ic',
+                    'Submit Verify IC',
                     // style: TextStyle(fontSize: 24),
                   ),
                   onPressed: () async {
                     bool changed = await Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const EditProfile(),
+                        builder: (context) => const VerifyIcView(),
                       ),
                     );
                     changed ? getData() : Container();
                   },
                 ),
                 const SizedBox(height: 20),
-                const Text(
-                  'Signed In as',
-                  style: TextStyle(fontSize: 16),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  user.email!,
-                  style: const TextStyle(fontSize: 20),
-                  // style: const TextStyle(fontSize: 20, fontWeight: 20),
-                ),
                 const SizedBox(height: 10),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
@@ -176,5 +180,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
     );
+    }
   }
 }

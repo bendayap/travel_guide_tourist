@@ -71,6 +71,7 @@ class _UpdateWalletState extends State<UpdateWallet> {
                 Text('Current Balance: ${data['balance']}'),
                 const SizedBox(height: 30),
                 TextFormField(
+                  ///TODO: null check and 2 decimal
                   controller: amountController,
                   inputFormatters: <TextInputFormatter>[
                     FilteringTextInputFormatter.digitsOnly,
@@ -102,7 +103,7 @@ class _UpdateWalletState extends State<UpdateWallet> {
                   ),
                   onPressed: () async {
                     // updateEWallet(data['action'], data['eWalletId'], data['balance']);
-                    updateEWallet(action, eWalletId, balance);
+                    updateEWallet(action, eWalletId, data['cardNumber'], balance);
                   },
                 ),
                 const SizedBox(height: 30),
@@ -114,7 +115,7 @@ class _UpdateWalletState extends State<UpdateWallet> {
     );
   }
 
-  Future updateEWallet(String action, String eWalletId, double balance) async {
+  Future updateEWallet(String action, String eWalletId, String cardNumber, double balance) async {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -124,6 +125,12 @@ class _UpdateWalletState extends State<UpdateWallet> {
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
     final isValid = formKey.currentState!.validate();
     if (!isValid) return;
+
+    var eWalletSnap = await firestore
+        .collection('eWallet')
+        .doc("ewallet_${FirebaseAuth.instance.currentUser!.uid}")
+        .get();
+    var eWalletData = eWalletSnap.data()!;
 
     final user = FirebaseAuth.instance.currentUser!;
     double amount = double.parse(amountController.text);
@@ -140,7 +147,7 @@ class _UpdateWalletState extends State<UpdateWallet> {
     late double newWalletBalance;
     late DateTime dateTime;
 
-    if (action == 'Withdraw' && balance < amount) {
+    if (action == 'Withdraw' && eWalletData['balance'] < amount) {
       Utils.showSnackBar('Insufficient Fund');
       navigatorKey.currentState!.pop();
       return;
@@ -151,20 +158,20 @@ class _UpdateWalletState extends State<UpdateWallet> {
     ownerId = user.uid;
     if (action == 'Reload') {
       transactionAmount = "+RM ${amount.toString()}";
-      receiveFrom = "Bank Card";
+      receiveFrom = "Bank Card $cardNumber";
       transferTo = ownerId;
       transactionType = "Reload";
       paymentDetails = "Reload eWallet balance from bank";
       paymentMethod = "Bank Card";
-      newWalletBalance = balance + amount;
+      newWalletBalance = eWalletData['balance'] + amount;
     } else if (action == 'Withdraw') {
       transactionAmount = "-RM ${amount.toString()}";
       receiveFrom = ownerId;
-      transferTo = "Bank Card";
+      transferTo = "Bank Card $cardNumber";
       transactionType = "Withdraw";
       paymentDetails = "Withdraw from eWallet balance to bank";
       paymentMethod = "eWallet Balance";
-      newWalletBalance = balance - amount;
+      newWalletBalance = eWalletData['balance'] - amount;
     }
     dateTime = DateTime.now();
     status = "Successfully";

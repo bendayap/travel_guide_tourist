@@ -14,11 +14,11 @@ class TouristTransaction {
   final String status;
 
   const TouristTransaction({
-    required this.transactionId,
+    this.transactionId = '',
     required this.transactionAmount,
     required this.ownerId,
-    required this.receiveFrom,
-    required this.transferTo,
+    this.receiveFrom = '',
+    this.transferTo = '',
     required this.transactionType,
     required this.paymentDetails,
     required this.paymentMethod,

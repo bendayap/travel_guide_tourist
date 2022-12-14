@@ -1,5 +1,7 @@
 import 'package:travel_guide_tourist/imports.dart';
 
+import 'admin_wallet_screen.dart';
+
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
 
@@ -9,6 +11,7 @@ class WalletScreen extends StatefulWidget {
 
 class _WalletScreenState extends State<WalletScreen> {
   bool isLoading = false;
+  bool isAdmin = false;
   var eWalletData = {};
 
   @override
@@ -19,18 +22,29 @@ class _WalletScreenState extends State<WalletScreen> {
 
   Future getData() async {
     try {
-      // setState(() {
-      //   isLoading = true;
-      // });
-      var eWalletSnap = await FirebaseFirestore.instance
-          .collection('eWallet')
-          .doc("ewallet_${FirebaseAuth.instance.currentUser!.uid}")
-          .get();
+      setState(() {
+        isLoading = true;
+      });
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null) {
+        var collectionRef = FirebaseFirestore.instance.collection('admins');
+        var doc = await collectionRef.doc(currentUser.uid).get();
+        if (doc.exists) {
+          isAdmin = true;
+        }
+      }
 
-      eWalletData = eWalletSnap.data()!;
-      // setState(() {
-      //   isLoading = false;
-      // });
+      if (!isAdmin) {
+        var eWalletSnap = await FirebaseFirestore.instance
+            .collection('eWallet')
+            .doc("ewallet_${FirebaseAuth.instance.currentUser!.uid}")
+            .get();
+
+        eWalletData = eWalletSnap.data()!;
+      }
+      setState(() {
+        isLoading = false;
+      });
       setState(() {});
     } catch (e) {
       Utils.showSnackBar(e.toString());
@@ -38,7 +52,7 @@ class _WalletScreenState extends State<WalletScreen> {
   }
 
   Widget selectionView(IconData icon, String title) {
-    return Column(
+     return Column(
       children: [
         Container(
           width: MediaQuery.of(context).size.width,
@@ -73,7 +87,11 @@ class _WalletScreenState extends State<WalletScreen> {
   Widget build(BuildContext context) {
     double width = MediaQuery.of(context).size.width;
     double height = MediaQuery.of(context).size.height;
-    return Scaffold(
+
+    if (isAdmin) {
+      return const AdminWalletScreen();
+    } else {
+      return Scaffold(
       appBar: AppBar(
         title: const Text("Wallet"),
         backgroundColor: AppTheme.mainAppBar,
@@ -82,8 +100,35 @@ class _WalletScreenState extends State<WalletScreen> {
           Padding(
               padding: const EdgeInsets.only(right: 20.0),
               child: GestureDetector(
-                onTap: () {
-                  Navigator.pushNamed(context, '/chatroom_list');
+                onTap: () async {
+                  if (FirebaseAuth.instance.currentUser == null) {
+                    await showDialog(
+                      context: context,
+                      builder: (BuildContext context) => AlertDialog(
+                        title: const Text('No User Logged'),
+                        // content: const Text(
+                        //     'Login first in order to make a request.'),
+                        content: SingleChildScrollView(
+                          child: ListBody(
+                            children: const <Widget>[
+                              Text('Login first in order to make a request.'),
+                              Text('Profile -> Login/Sign Up'),
+                            ],
+                          ),
+                        ),
+                        actions: <Widget>[
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context, 'OK');
+                            },
+                            child: const Text('OK'),
+                          ),
+                        ],
+                      ),
+                    );
+                  } else {
+                    Navigator.pushNamed(context, '/chatroom_list');
+                  }
                 },
                 child: const Icon(Icons.message),
               )),
@@ -265,5 +310,6 @@ class _WalletScreenState extends State<WalletScreen> {
               ),
       ),
     );
+    }
   }
 }

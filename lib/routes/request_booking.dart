@@ -77,42 +77,11 @@ class _RequestBookingState extends State<RequestBooking> {
                 Text('Price: ${data['price']}'),
                 const SizedBox(height: 20),
                 const SizedBox(height: 4),
-                // InputDatePickerFormField(
-                //     initialDate: today,
-                //     firstDate: DateTime(2000),
-                //     lastDate: DateTime(2100),
-                // ),
-                // InkWell(
-                //   onTap: () {
-                //     _selectDate(context);
-                //   },
-                //   child: Text(
-                //       "Select Date: ${selectedDate.toLocal().toString().split(' ')[0]}",
-                //     style: const TextStyle(fontSize: 20),
-                //   ),
-                // ),
                 InkWell(
                   onTap: () {
                     _selectDate(context);
                   },
                   child: customText,
-                  // child: TextFormField(
-                  //   ///Date Display Field
-                  //   enabled: false,
-                  //   disabledColor: Colors.blueAccent,
-                  //   controller: dateController,
-                  //   textInputAction: TextInputAction.done,
-                  //   keyboardType: TextInputType.number,
-                  //   decoration: const InputDecoration(
-                  //     // prefixIcon: Padding(
-                  //     //   padding: EdgeInsets.all(8.0),
-                  //     // ),
-                  //     border: OutlineInputBorder(
-                  //       borderSide: BorderSide(color: Colors.blueAccent),
-                  //     ),
-                  //     label: Text('Select Date'),
-                  //   ),
-                  // ),
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton.icon(
@@ -124,10 +93,34 @@ class _RequestBookingState extends State<RequestBooking> {
                     'Send Request',
                     style: TextStyle(fontSize: 24),
                   ),
-                  onPressed: () {
-                    final tourDate = selectedDate;
-                    requestBooking(data['packageId'], data['tourGuideId'],
-                        data['price'], today, tourDate);
+                  onPressed: () async {
+                    await showDialog(
+                      context: context,
+                      builder: (BuildContext context) => AlertDialog(
+                        title: const Text('Confirm to Request?'),
+                        actions: <Widget>[
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context, 'Cancel');
+                            },
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              final tourDate = selectedDate;
+                              requestBooking(
+                                  data['packageId'],
+                                  data['tourGuideId'],
+                                  data['price'],
+                                  today,
+                                  tourDate,
+                                  data['packageTitle']);
+                            },
+                            child: const Text('Confirm'),
+                          ),
+                        ],
+                      ),
+                    );
                   },
                 ),
                 const SizedBox(height: 20),
@@ -140,16 +133,17 @@ class _RequestBookingState extends State<RequestBooking> {
   }
 
   Future requestBooking(String packageId, String tourGuideId, num price,
-      DateTime today, DateTime tourDate) async {
+      DateTime today, DateTime tourDate, String packageTitle) async {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => const Center(child: CircularProgressIndicator()),
     );
 
-    if (FirebaseAuth.instance.currentUser != null) {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
       final FirebaseFirestore firestore = FirebaseFirestore.instance;
-      final user = FirebaseAuth.instance.currentUser!;
+      final user = currentUser;
       String bookingId = const Uuid().v1();
       // var budget = num.parse(budgetController.text);
 
@@ -168,8 +162,49 @@ class _RequestBookingState extends State<RequestBooking> {
           .doc(bookingId)
           .set(booking.toJson());
 
-      ///TODO: deduct balance and balance checking
+      ///update balance
+      final docWallet = FirebaseFirestore.instance
+          .collection('eWallet')
+          .doc('ewallet_${currentUser.uid}');
+      var eWalletSnap = await docWallet.get();
+      var docWalletData = eWalletSnap.data()!;
+      double newBalance = docWalletData['balance'] - price;
 
+      docWallet.update({
+        'balance': newBalance,
+      });
+
+      ///Add Transaction
+      String transactionId = "BookingRequest_$bookingId";
+      String transactionAmount = "-RM ${price.toString()}";
+      String ownerId = user.uid;
+      // late String receiveFrom;
+      String transferTo = tourGuideId;
+      String transactionType = "Booking";
+      String paymentDetails = "Book Package: $packageTitle";
+      String paymentMethod = "eWallet Balance";
+      String status = "Pending";
+      double newWalletBalance = newBalance;
+      DateTime dateTime = DateTime.now();
+
+      TouristTransaction transaction = TouristTransaction(
+        transactionId: transactionId,
+        transactionAmount: transactionAmount,
+        ownerId: ownerId,
+        // receiveFrom: receiveFrom,
+        transferTo: transferTo,
+        transactionType: transactionType,
+        paymentDetails: paymentDetails,
+        paymentMethod: paymentMethod,
+        newWalletBalance: newWalletBalance,
+        dateTime: dateTime,
+        status: status,
+      );
+
+      await firestore
+          .collection("touristTransactions")
+          .doc(transactionId)
+          .set(transaction.toJson());
     }
 
     Navigator.popUntil(context, ModalRoute.withName('/tour_guide_list'));

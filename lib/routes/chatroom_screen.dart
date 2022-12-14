@@ -35,7 +35,6 @@ class _ChatroomScreenState extends State<ChatroomScreen> {
       isLoading = true;
     });
     try {
-      ///TODO: when come back same packageTitle will have error message
       var chatroomDetailSnap = await FirebaseFirestore.instance
           .collection('chatrooms')
           .doc(widget.chatroomId)

@@ -52,7 +52,12 @@ class TourGuideList extends StatelessWidget {
               return Text('Something went wrong! ${snapshot.error}');
             } else if (snapshot.hasData) {
               final tourGuides = snapshot.data!;
-
+              // if (tourGuides.isEmpty) {
+              //   return const Padding(
+              //     padding: EdgeInsets.all(5),
+              //       child: Text('The tour guide currently has no providing any tour package.'),
+              //   );
+              // }
               return ListView(
                 children: tourGuides.map(buildTourGuide).toList(),
               );

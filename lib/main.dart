@@ -1,3 +1,5 @@
+import 'package:travel_guide_tourist/routes/ic_detail.dart';
+
 import 'imports.dart';
 
 Future main() async {
@@ -50,6 +52,8 @@ class MyApp extends StatelessWidget {
             '/transaction_list': (context) => const TransactionList(),
             '/transaction_detail': (context) => const TransactionDetail(),
             '/chatroom_list': (context) => const ChatroomList(),
+            '/tourist_order_list': (context) => const TouristOrderList(),
+            '/ic_detail': (context) => const IcDetail(),
             // '/chatroom_screen': (context) => const ChatroomScreen(),
           },
           home: const MyStatefulWidget(),

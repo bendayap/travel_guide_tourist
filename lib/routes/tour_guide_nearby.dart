@@ -8,50 +8,95 @@ class TourGuideNearby extends StatefulWidget {
 }
 
 class _TourGuideNearbyState extends State<TourGuideNearby> {
+  late double currentLat;
+  late double currentLng;
 
   @override
   Widget build(BuildContext context) {
     var data = (ModalRoute.of(context)!.settings.arguments as Map);
     String currentAddress = data['currentAddress'];
-    num currentLat = data['currentLat'];
-    num currentLng = data['currentLng'];
+    currentLat = data['currentLat'];
+    currentLng = data['currentLng'];
 
     var onDutyList = data['onDutyList'];
 
-    Widget buildTourGuide(TourGuide tourGuide) => Card(
-          child: ListTile(
-            onTap: () {
-              ///pass arguments to route
-              Navigator.pushNamed(context, '/tour_guide_nearby_detail',
-                  arguments: {
-                    'uid': tourGuide.uid,
-                    'username': tourGuide.username,
-                    'fullname': tourGuide.fullname,
-                    'phoneNumber': tourGuide.phoneNumber,
-                    'email': tourGuide.email,
-                    'isEmailVerified': tourGuide.isEmailVerified,
-                    'icNumber': tourGuide.icNumber,
-                    'isIcVerified': tourGuide.isIcVerified,
-                    'photoUrl': tourGuide.photoUrl,
-                    'description': tourGuide.description,
-                    'language': tourGuide.language,
-                    'rating': tourGuide.rating,
-                    'rateNumber': tourGuide.rateNumber,
-                    'totalDone': tourGuide.totalDone,
-                    'grade': tourGuide.grade,
-                    'currentAddress': currentAddress,
-                    'currentLat': currentLat,
-                    'currentLng': currentLng,
-                  });
-            },
-            leading: CircleAvatar(child: Image.network(tourGuide.photoUrl)),
-            title: Text(tourGuide.username),
-            // trailing: Padding(
-            //   padding: EdgeInsets.all(3.0),
-            //   child: ,
-            // ),
-          ),
-        );
+    // Widget buildTourGuide(TourGuide tourGuide) => Card(
+    //       child: ListTile(
+    //         onTap: () {
+    //           ///pass arguments to route
+    //           Navigator.pushNamed(context, '/tour_guide_nearby_detail',
+    //               arguments: {
+    //                 'uid': tourGuide.uid,
+    //                 'username': tourGuide.username,
+    //                 'fullname': tourGuide.fullname,
+    //                 'phoneNumber': tourGuide.phoneNumber,
+    //                 'email': tourGuide.email,
+    //                 'isEmailVerified': tourGuide.isEmailVerified,
+    //                 'icNumber': tourGuide.icNumber,
+    //                 'isIcVerified': tourGuide.isIcVerified,
+    //                 'photoUrl': tourGuide.photoUrl,
+    //                 'description': tourGuide.description,
+    //                 'language': tourGuide.language,
+    //                 'rating': tourGuide.rating,
+    //                 'rateNumber': tourGuide.rateNumber,
+    //                 'totalDone': tourGuide.totalDone,
+    //                 'grade': tourGuide.grade,
+    //                 'currentAddress': currentAddress,
+    //                 'currentLat': currentLat,
+    //                 'currentLng': currentLng,
+    //               });
+    //         },
+    //         leading: CircleAvatar(child: Image.network(tourGuide.photoUrl)),
+    //         title: Text(tourGuide.username),
+    //         // trailing: Padding(
+    //         //   padding: EdgeInsets.all(3.0),
+    //         //   child: ,
+    //         // ),
+    //       ),
+    //     );
+
+    // Future<Widget> buildTourGuide(TourGuide tourGuide) async {
+    //   var instantOrderSnap = await FirebaseFirestore.instance
+    //       .collection('instantOrder')
+    //       .doc('instant_${tourGuide.uid}')
+    //       .get();
+    //   var instantOrderData = instantOrderSnap.data()!;
+    //
+    //   return Card(
+    //     child: ListTile(
+    //       onTap: () {
+    //         ///pass arguments to route
+    //         Navigator.pushNamed(context, '/tour_guide_nearby_detail',
+    //             arguments: {
+    //               'uid': tourGuide.uid,
+    //               'username': tourGuide.username,
+    //               'fullname': tourGuide.fullname,
+    //               'phoneNumber': tourGuide.phoneNumber,
+    //               'email': tourGuide.email,
+    //               'isEmailVerified': tourGuide.isEmailVerified,
+    //               'icNumber': tourGuide.icNumber,
+    //               'isIcVerified': tourGuide.isIcVerified,
+    //               'photoUrl': tourGuide.photoUrl,
+    //               'description': tourGuide.description,
+    //               'language': tourGuide.language,
+    //               'rating': tourGuide.rating,
+    //               'rateNumber': tourGuide.rateNumber,
+    //               'totalDone': tourGuide.totalDone,
+    //               'grade': tourGuide.grade,
+    //               'currentAddress': currentAddress,
+    //               'currentLat': currentLat,
+    //               'currentLng': currentLng,
+    //             });
+    //       },
+    //       leading: CircleAvatar(child: Image.network(tourGuide.photoUrl)),
+    //       title: Text(tourGuide.username),
+    //       // trailing: Padding(
+    //       //   padding: EdgeInsets.all(3.0),
+    //       //   child: ,
+    //       // ),
+    //     ),
+    //   );
+    // }
 
     Stream<List<TourGuide>> readTourGuides() => FirebaseFirestore.instance
         .collection('tourGuides')
@@ -85,8 +130,78 @@ class _TourGuideNearbyState extends State<TourGuideNearby> {
                   } else if (snapshot.hasData) {
                     final tourGuides = snapshot.data!;
 
-                    return ListView(
-                      children: tourGuides.map(buildTourGuide).toList(),
+                    return ListView.builder(
+                      itemCount: tourGuides.length,
+                      itemBuilder: (context, index) {
+                        TourGuide tourGuide = tourGuides[index];
+                        return FutureBuilder(
+                          future: FirebaseFirestore.instance
+                              .collection('instantOrder')
+                              // .where('ownerId', isEqualTo: tourGuide.uid)
+                              .doc("instant_${tourGuide.uid}")
+                              .get(),
+                          // .snapshots(),
+                          builder: (context, document) {
+                            if (document.hasError) {
+                              return Text(
+                                  'Something went wrong! ${document.error}');
+                            } else if (document.hasData) {
+                              // DocumentSnapshot instantOrder = snapshot.data.docs[0];
+                              // final instantOrder = snapshot.data!.docs;
+                              final instantOrder = document.data!;
+                              double distance = _calculateDistance(
+                                  currentLat, currentLng,
+                                  instantOrder['currentLatitude'], instantOrder['currentLongitude']);
+
+                              return Card(
+                                child: ListTile(
+                                  onTap: () {
+                                    ///pass arguments to route
+                                    Navigator.pushNamed(
+                                        context, '/tour_guide_nearby_detail',
+                                        arguments: {
+                                          'uid': tourGuide.uid,
+                                          'username': tourGuide.username,
+                                          'fullname': tourGuide.fullname,
+                                          'phoneNumber': tourGuide.phoneNumber,
+                                          'email': tourGuide.email,
+                                          'isEmailVerified':
+                                              tourGuide.isEmailVerified,
+                                          'icNumber': tourGuide.icNumber,
+                                          'isIcVerified':
+                                              tourGuide.isIcVerified,
+                                          'photoUrl': tourGuide.photoUrl,
+                                          'description': tourGuide.description,
+                                          'language': tourGuide.language,
+                                          'rating': tourGuide.rating,
+                                          'rateNumber': tourGuide.rateNumber,
+                                          'totalDone': tourGuide.totalDone,
+                                          'grade': tourGuide.grade,
+                                          'currentAddress': currentAddress,
+                                          'currentLat': currentLat,
+                                          'currentLng': currentLng,
+                                          'price': instantOrder['price'],
+                                        });
+                                  },
+                                  leading: CircleAvatar(
+                                      child: Image.network(tourGuide.photoUrl)),
+                                  title: Text(tourGuide.username),
+                                  subtitle:
+                                      Text("Price/hr: RM ${instantOrder['price'].toString()}"
+                                          "\nDistance: ${distance.toStringAsFixed(0)} meters"),
+                                  // trailing: Padding(
+                                  //   padding: EdgeInsets.all(3.0),
+                                  //   child: ,
+                                  // ),
+                                ),
+                              );
+                            } else {
+                              return const Center(
+                                  child: CircularProgressIndicator());
+                            }
+                          },
+                        );
+                      },
                     );
                   } else {
                     return const Center(child: CircularProgressIndicator());
@@ -100,7 +215,7 @@ class _TourGuideNearbyState extends State<TourGuideNearby> {
     );
   }
 
-  _calculateDistance(double lat1, double lng1, lat2, lng2) {
+  _calculateDistance(double lat1, lng1, lat2, lng2) {
     var p = 0.017453292519943295;
     var c = cos;
     var a = 0.5 -
@@ -111,22 +226,4 @@ class _TourGuideNearbyState extends State<TourGuideNearby> {
     /// return as distance in Meters
     return distanceInKiloMeters * 1000;
   }
-
-  // getInstant() async {
-  //   InstantOrder instantOrder;
-  //   await FirebaseFirestore.instance
-  //   .collection('instantOrder')
-  //   // .where('onDuty', isEqualTo: true)
-  //       .get()
-  //       .then((value) => {
-  //     value.docs.forEach((doc) {
-  //       // instantOrder = InstantOrder.fromJson(doc.data());
-  //       // onDutyList.add(instantOrder.ownerID);
-  //       // onDutyList.add(doc.data()['ownerID'].toString());
-  //       onDutyList.add(doc.data()['ownerID']);
-  //       // onDutyList.add('pp123');
-  //     })
-  //   });
-  //   // onDutyList.add('ww');
-  // }
 }

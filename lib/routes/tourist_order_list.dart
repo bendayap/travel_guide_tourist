@@ -1,54 +1,54 @@
 import 'package:travel_guide_tourist/imports.dart';
 
-class TouristBookingList extends StatelessWidget {
-  const TouristBookingList({Key? key}) : super(key: key);
+class TouristOrderList extends StatelessWidget {
+  const TouristOrderList({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     var data = (ModalRoute.of(context)!.settings.arguments as Map);
-    Widget buildBooking(Booking booking) => Card(
+    Widget buildOrder(OrderRequest order) => Card(
           child: ListTile(
             onTap: () async {
               ///pass arguments to route
               await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => BookingDetail(
-                    bookingId: booking.bookingId,
+                  builder: (context) => OrderDetail(
+                    orderId: order.orderId,
                   ),
                 ),
               );
             },
-            title: Text('ID: ${booking.bookingId}'),
+            title: Text('ID: ${order.orderId}'),
             subtitle: Text(
-                'Date: ${booking.tourDate.toString()}\nPrice: ${booking.price}\nStatus: ${booking.status}'),
+                'Date: ${order.startTime.toString()}\nAmount: RM ${order.paymentAmount}\nStatus: ${order.status}'),
           ),
         );
 
-    Stream<List<Booking>> readBookings() => FirebaseFirestore.instance
-        .collection('bookings')
+    Stream<List<OrderRequest>> readOrders() => FirebaseFirestore.instance
+        .collection('orderRequests')
         .where('touristId', isEqualTo: data['uid'])
-        .orderBy('bookingDate', descending: true)
+        .orderBy('startTime', descending: true)
         .snapshots()
         .map((snapshot) =>
-            snapshot.docs.map((doc) => Booking.fromJson(doc.data())).toList());
+            snapshot.docs.map((doc) => OrderRequest.fromJson(doc.data())).toList());
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Booking'),
+        title: const Text('My Order'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: StreamBuilder<List<Booking>>(
-          stream: readBookings(),
+        child: StreamBuilder<List<OrderRequest>>(
+          stream: readOrders(),
           builder: (context, snapshot) {
             if (snapshot.hasError) {
               return Text('Something went wrong! ${snapshot.error}');
             } else if (snapshot.hasData) {
-              final booking = snapshot.data!;
+              final order = snapshot.data!;
 
               return ListView(
-                children: booking.map(buildBooking).toList(),
+                children: order.map(buildOrder).toList(),
               );
             } else {
               return const Center(child: CircularProgressIndicator());

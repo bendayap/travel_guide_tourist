@@ -13,7 +13,7 @@ class TourGuide {
   final String photoUrl;
   final String description;
   final Map<String, dynamic> language;
-  final double rating;
+  final num rating;
   final int rateNumber;
   final int totalDone;
   final String grade;
