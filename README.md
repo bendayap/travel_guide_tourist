@@ -1,3 +1,6 @@
+# Admin Key is required to sign up as admin
+Admin Key: 'IamAdmin'
+
 # travel_guide_tourist
 
 A new Flutter project.
